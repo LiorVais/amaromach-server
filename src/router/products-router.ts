@@ -1,11 +1,12 @@
 import Router from 'koa-joi-router';
 import JoiObjectId from 'joi-objectid';
 import {
-  addProduct, deleteProduct,
+  addProduct,
+  deleteProduct,
   getAllProducts,
   getProduct,
   updateManyProducts,
-  updateProduct
+  updateProduct,
 } from '../controllers/products-controller';
 
 const Joi = Router.Joi;
@@ -23,7 +24,7 @@ productsRouter.route({
     },
     failure: 400,
   },
-  handler: getProduct
+  handler: getProduct,
 });
 
 productsRouter.route({
@@ -46,7 +47,7 @@ productsRouter.route({
     type: 'json',
     failure: 400,
   },
-  handler: updateProduct
+  handler: updateProduct,
 });
 
 productsRouter.route({
@@ -69,7 +70,7 @@ productsRouter.route({
     type: 'json',
     failure: 400,
   },
-  handler: updateManyProducts
+  handler: updateManyProducts,
 });
 
 productsRouter.route({
@@ -83,24 +84,24 @@ productsRouter.route({
         price: Joi.number().required(),
         image: Joi.string().required(),
         isLimited: Joi.boolean().required(),
-        stock: Joi.when('isLimited', {is: true, then: Joi.number().required()}),
+        stock: Joi.when('isLimited', { is: true, then: Joi.number().required() }),
       }),
     },
     type: 'json',
     failure: 400,
   },
-  handler: addProduct
+  handler: addProduct,
 });
 
 productsRouter.route({
   method: 'delete',
   path: '/products',
   validate: {
-    body: {
+    params: {
       id: joiObjectId().required(),
     },
     type: 'json',
     failure: 400,
   },
-  handler: deleteProduct
+  handler: deleteProduct,
 });
