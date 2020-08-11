@@ -1,14 +1,12 @@
 import mongoose from 'mongoose';
-import AbstractLogger from 'src/core/logger/AbstractLogger';
 import AbstractSetting from 'src/core/config/AbstractSetting';
 import { IMongoConfig } from '../interfaces/IConfig';
 import logger from 'src/core/logger/Logger';
 
 export default class MongoConnector {
-  private logger: AbstractLogger;
   constructor(private setting: AbstractSetting) {
-    mongoose.connection.once('disconnected', () => logger.warn('Mongo connection disconnected'));
-    mongoose.connection.once('reconnected', () => logger.warn('Mongo connection reconnected'));
+    mongoose.connection.on('disconnected', () => logger.warn('Mongo connection disconnected'));
+    mongoose.connection.on('reconnected', () => logger.warn('Mongo connection reconnected'));
     this.initMongoConnection(setting.config.db);
   }
 
