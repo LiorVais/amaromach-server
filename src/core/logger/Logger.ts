@@ -1,16 +1,16 @@
 import fs from 'fs';
 import winston from 'winston';
+import nconf from 'nconf';
 import DailyRotate from 'winston-daily-rotate-file';
-import AbstractSetting from 'src/core/config/AbstractSetting';
 import AbstractLogger from 'src/core/logger/AbstractLogger';
-import Settings from '../config/Settings';
+import { ILoggerConfig } from '../../interfaces/IConfig';
 
 const { format } = winston;
 
 class Logger extends AbstractLogger {
   private logger: winston.Logger;
 
-  constructor(private settings: AbstractSetting) {
+  constructor(private config: ILoggerConfig) {
     super();
     this.checkForLogFileDir();
     this.initializeLogger();
@@ -21,7 +21,7 @@ class Logger extends AbstractLogger {
   }
 
   private checkForLogFileDir(): void {
-    const dir = this.settings.config.log.filedir;
+    const dir = this.config.filedir;
 
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir);
@@ -30,15 +30,15 @@ class Logger extends AbstractLogger {
 
   private initializeLogger(): void {
     this.logger = winston.createLogger({
-      level: this.settings.config.log.level,
+      level: this.config.level,
       format: winston.format.json(),
       transports: [
         new winston.transports.Console({
           format: format.combine(format.colorize(), format.simple()),
         }),
         new DailyRotate({
-          filename: this.settings.config.log.filename,
-          dirname: this.settings.config.log.filedir,
+          filename: this.config.filename,
+          dirname: this.config.filedir,
           maxSize: 20971520, // 20MB
           maxFiles: 25,
           datePattern: 'DD-MM-YYYY',
@@ -48,4 +48,4 @@ class Logger extends AbstractLogger {
   }
 }
 
-export default new Logger(new Settings());
+export default new Logger(nconf.get('log'));

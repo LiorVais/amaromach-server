@@ -3,16 +3,20 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import respond from 'koa-respond';
 import koaLogger from 'koa-logger';
+import nconf from 'nconf';
+nconf.file({
+  file: 'src/core/config/config.dev.json',
+  logicalSeparator: '.',
+});
 
-import MongoConnector from 'src/connectors/database-connector';
+import { initMongoLogs, initMongoConnection } from 'src/connectors/mongo-connector';
 import logger from 'src/core/logger/Logger';
-import Settings from 'src/core/config/Settings';
 import { productsRouter } from './router/products-router';
 import { errorMiddleware } from 'src/middlewares/error-handling';
 
 const app = new Koa();
-const settings = new Settings();
-const mongoConnector = new MongoConnector(settings);
+initMongoLogs();
+initMongoConnection(nconf.get('db'));
 
 app.use(errorMiddleware);
 app.use(respond());
@@ -29,6 +33,6 @@ app.on('error', (err, ctx) => {
   err.originalError && logger.error(err.originalError.stack);
 });
 
-app.listen(settings.config.server.port, () => {
-  logger.info(`Amaronach server is on http://localhost:${settings.config.server.port}/`);
+app.listen(nconf.get('server').port, () => {
+  logger.info(`Amaromach server is on http://localhost:${nconf.get('server').port}/`);
 });

@@ -1,20 +1,13 @@
-export interface IConfig {
-  server: IServerConfig;
-  db: IMongoConfig;
-  log: ILoggerConfig;
-}
-
-interface IServerConfig {
-  port: number;
-}
-
 export interface IMongoConfig {
+  connectionString: String;
   dbName: String;
-  userName: String;
+  user: String;
   password: String;
+  serverSelectionTimeoutMS: number;
+  heartbeatFrequencyMS: number;
 }
 
-interface ILoggerConfig {
+export interface ILoggerConfig {
   level: string;
   filename: string;
   filedir: string;
