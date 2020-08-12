@@ -1,5 +1,6 @@
 import Router from 'koa-joi-router';
-import JoiObjectId from 'joi-objectid';
+import { validateMongoIdSchema, validateProductSchema } from 'src/validators/joi-schemas';
+
 import {
   addProduct,
   deleteProduct,
@@ -9,99 +10,22 @@ import {
   updateProduct,
 } from '../controllers/products-controller';
 
+import { validateParamsId } from 'src/validators/params-id';
+import { validateBodyProduct } from '../validators/body-product';
+import { validateBodyProductArray } from '../validators/body-product-array';
+import { validateBodyProductId } from '../validators/body-product-id';
+
 const Joi = Router.Joi;
-const joiObjectId = JoiObjectId(Joi);
 export const productsRouter = Router();
 
 productsRouter.get('/products', getAllProducts);
 
-productsRouter.route({
-  method: 'get',
-  path: '/products/:id',
-  validate: {
-    params: {
-      id: joiObjectId().required(),
-    },
-    failure: 400,
-  },
-  handler: getProduct,
-});
+productsRouter.get('/products/:id', validateParamsId, getProduct);
 
-productsRouter.route({
-  method: 'put',
-  path: '/products/:id',
-  validate: {
-    params: {
-      id: joiObjectId().required(),
-    },
-    body: {
-      product: Joi.object().keys({
-        name: Joi.string(),
-        description: Joi.string(),
-        price: Joi.number(),
-        image: Joi.string(),
-        isLimited: Joi.boolean(),
-        stock: Joi.when('isLimited', { is: true, then: Joi.number().required() }),
-      }),
-    },
-    type: 'json',
-    failure: 400,
-  },
-  handler: updateProduct,
-});
+productsRouter.put('/products/:id', validateParamsId, validateBodyProduct(), updateProduct);
 
-productsRouter.route({
-  method: 'put',
-  path: '/products',
-  validate: {
-    body: {
-      products: Joi.array().items(
-        Joi.object().keys({
-          id: joiObjectId().required(),
-          name: Joi.string(),
-          description: Joi.string(),
-          price: Joi.number(),
-          image: Joi.string(),
-          isLimited: Joi.boolean(),
-          stock: Joi.when('isLimited', { is: true, then: Joi.number().required() }),
-        }),
-      ),
-    },
-    type: 'json',
-    failure: 400,
-  },
-  handler: updateManyProducts,
-});
+productsRouter.put('/products', validateBodyProductArray, updateManyProducts);
 
-productsRouter.route({
-  method: 'post',
-  path: '/products',
-  validate: {
-    body: {
-      product: Joi.object().keys({
-        name: Joi.string().required(),
-        description: Joi.string(),
-        price: Joi.number().required(),
-        image: Joi.string().required(),
-        isLimited: Joi.boolean().required(),
-        stock: Joi.when('isLimited', { is: true, then: Joi.number().required() }),
-      }),
-    },
-    type: 'json',
-    failure: 400,
-  },
-  handler: addProduct,
-});
+productsRouter.post('/products', validateBodyProduct({ presence: 'required' }), addProduct);
 
-productsRouter.route({
-  method: 'delete',
-  path: '/products',
-  validate: {
-    params: {
-      id: joiObjectId().required(),
-    },
-    type: 'json',
-    failure: 400,
-  },
-  handler: deleteProduct,
-});
+productsRouter.delete('/products/:id', validateParamsId, deleteProduct);
