@@ -2,6 +2,8 @@ import 'module-alias/register';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import respond from 'koa-respond';
+import koaLogger from 'koa-logger';
+
 import MongoConnector from 'src/connectors/database-connector';
 import logger from 'src/core/logger/Logger';
 import Settings from 'src/core/config/Settings';
@@ -15,6 +17,11 @@ const mongoConnector = new MongoConnector(settings);
 app.use(errorMiddleware);
 app.use(respond());
 app.use(bodyParser());
+app.use(
+  koaLogger((str, args) => {
+    logger.debug(str);
+  }),
+);
 app.use(productsRouter.middleware());
 
 app.on('error', (err, ctx) => {
