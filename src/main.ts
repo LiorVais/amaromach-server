@@ -19,7 +19,7 @@ app.use(productsRouter.middleware());
 
 app.on('error', (err, ctx) => {
   logger.error(`Got error code ${err.status} - message: ${err.message}`);
-  logger.error(err.originalError.stack);
+  err.originalError && logger.error(err.originalError.stack);
 });
 
 app.listen(settings.config.server.port, () => {

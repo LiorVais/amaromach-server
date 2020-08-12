@@ -1,4 +1,4 @@
-import { ProductSchema } from 'src/schemas/product-schema';
+import { Document } from 'mongoose';
 import { IProduct } from '../interfaces/IProduct';
 import { Context } from 'koa';
 import logger from '../core/logger/Logger';
@@ -8,6 +8,7 @@ import {
   createProduct,
   findAndDeleteProduct,
   findAndUpdateProduct,
+  bulkUpdateProducts,
 } from '../data/products-db';
 
 export const getAllProducts = async (ctx: Context, next) => {
@@ -49,14 +50,14 @@ export const getProduct = async (ctx: Context, next) => {
 };
 
 export const addProduct = async (ctx, next) => {
-  let newProduct: IProduct;
+  let newProduct: IProduct | Document;
 
   try {
     newProduct = await createProduct(ctx.request.body.product);
     ctx.created(newProduct);
     logger.info(`Document created with id ${newProduct._id}`);
   } catch (err) {
-    ctx.internalServerError(err);
+    ctx.internalServerError();
     logger.warn(`Failed to create product: ${JSON.stringify(err)}`);
   }
 
@@ -83,30 +84,18 @@ export const updateProduct = async (ctx, next) => {
 };
 
 export const updateManyProducts = async (ctx, next) => {
+  const { products } = ctx.request.body;
+
   try {
-    const products = await ProductSchema.find()
-      .where('_id')
-      .in(ctx.request.body.products.map((product) => product.id))
-      .exec();
-    if (products && products.length) {
-      await products.forEach((mongoProduct) => {
-        Object.assign(
-          mongoProduct,
-          ctx.request.body.products.find((product) => mongoProduct._id == product.id),
-        );
+    const updatedDocuments = await bulkUpdateProducts(products);
 
-        return mongoProduct.save();
-      });
-
-      ctx.ok();
-      logger.info(`Successfully updated ${products.length} products`);
-    } else {
-      ctx.notFound();
-      logger.warn(`No products updated`);
-    }
+    ctx.ok(updatedDocuments);
   } catch (err) {
-    ctx.internalServerError(err);
-    logger.warn(`Failed to update ${ctx.request.body.products.length} products: ${JSON.stringify(err)}`);
+    if (err === 404) {
+      ctx.notFound();
+    } else {
+      ctx.internalServerError();
+    }
   }
 
   await next();
@@ -123,7 +112,7 @@ export const deleteProduct = async (ctx, next) => {
       logger.warn(`Could not find product id '${ctx.params.id}'`);
     }
   } catch (err) {
-    ctx.internalServerError(err);
+    ctx.internalServerError();
     logger.warn(`Failed to delete product: ${JSON.stringify(err)}`);
   }
 
